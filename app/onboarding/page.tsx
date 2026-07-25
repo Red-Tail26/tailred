@@ -95,7 +95,7 @@ export default function OnboardingPage() {
             required
             value={form.business_name}
             onChange={(e) => update("business_name", e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2"
+            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
           />
         </label>
 
@@ -114,7 +114,7 @@ export default function OnboardingPage() {
           <input
             value={form.address}
             onChange={(e) => update("address", e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2"
+            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
           />
         </label>
 
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
             type="tel"
             value={form.phone}
             onChange={(e) => update("phone", e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2"
+            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
           />
         </label>
 
@@ -134,7 +134,7 @@ export default function OnboardingPage() {
             type="url"
             value={form.website}
             onChange={(e) => update("website", e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2"
+            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
           />
         </label>
 
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
             placeholder="@yourbusiness"
             value={form.social_links}
             onChange={(e) => update("social_links", e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2"
+            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
           />
         </label>
 
