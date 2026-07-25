@@ -34,6 +34,16 @@ const STATUS_LABEL: Record<Status, string> = {
 
 const STATUS_ORDER: Status[] = ["sourced", "listed", "sold"];
 
+const PLATFORM_OPTIONS = [
+  "Poshmark",
+  "Mercari",
+  "eBay",
+  "Depop",
+  "Facebook Marketplace",
+  "In-person",
+  "Other",
+];
+
 export default function InventoryPage() {
   const supabase = createClient();
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -46,6 +56,7 @@ export default function InventoryPage() {
     cogs: "",
     list_price: "",
     platform: "",
+    platformOther: "",
   });
 
   async function loadItems() {
@@ -80,12 +91,17 @@ export default function InventoryPage() {
       return;
     }
 
+    const resolvedPlatform =
+      newItem.platform === "Other"
+        ? newItem.platformOther || null
+        : newItem.platform || null;
+
     const { error } = await supabase.from("inventory_items").insert({
       user_id: user.id,
       item_name: newItem.item_name,
       cogs: parseFloat(newItem.cogs) || 0,
       list_price: newItem.list_price ? parseFloat(newItem.list_price) : null,
-      platform: newItem.platform || null,
+      platform: resolvedPlatform,
       status: "sourced",
     });
 
@@ -94,7 +110,13 @@ export default function InventoryPage() {
       return;
     }
 
-    setNewItem({ item_name: "", cogs: "", list_price: "", platform: "" });
+    setNewItem({
+      item_name: "",
+      cogs: "",
+      list_price: "",
+      platform: "",
+      platformOther: "",
+    });
     setShowForm(false);
     loadItems();
   }
@@ -177,14 +199,30 @@ export default function InventoryPage() {
             </label>
             <label className="flex flex-col gap-1 text-sm">
               Platform
-              <input
-                placeholder="Poshmark, eBay, in-person…"
+              <select
                 value={newItem.platform}
                 onChange={(e) =>
                   setNewItem((f) => ({ ...f, platform: e.target.value }))
                 }
                 className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
-              />
+              >
+                <option value="">Select…</option>
+                {PLATFORM_OPTIONS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+              {newItem.platform === "Other" && (
+                <input
+                  placeholder="Platform name"
+                  value={newItem.platformOther}
+                  onChange={(e) =>
+                    setNewItem((f) => ({ ...f, platformOther: e.target.value }))
+                  }
+                  className="mt-1 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
+                />
+              )}
             </label>
             <label className="flex flex-col gap-1 text-sm">
               Cost of goods
