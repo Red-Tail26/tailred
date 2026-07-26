@@ -11,13 +11,14 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
       setError(error.message);
@@ -25,7 +26,32 @@ export default function SignUpPage() {
       return;
     }
 
+    if (!data.session) {
+      // Email confirmation is required before a session exists.
+      setConfirmationSent(true);
+      setLoading(false);
+      return;
+    }
+
     router.push("/onboarding");
+  }
+
+  if (confirmationSent) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-4 px-6 text-center">
+        <h1 className="text-2xl font-semibold">Check your email</h1>
+        <p className="text-sm text-neutral-500">
+          We sent a confirmation link to <strong>{email}</strong>. Click it,
+          then come back and log in.
+        </p>
+        <a
+          href="/login"
+          className="mt-2 font-medium text-neutral-900 underline"
+        >
+          Go to log in
+        </a>
+      </main>
+    );
   }
 
   return (

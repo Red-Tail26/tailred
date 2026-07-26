@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -14,9 +14,46 @@ export default function OnboardingPage() {
     website: "",
     social_links: "",
   });
+  const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    async function loadExistingProfile() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoadingProfile(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("business_profile")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (profile) {
+        setForm({
+          business_name: profile.business_name ?? "",
+          address: profile.address ?? "",
+          phone: profile.phone ?? "",
+          website: profile.website ?? "",
+          social_links: profile.social_links ?? "",
+        });
+        setExistingLogoUrl(profile.logo_url ?? null);
+      }
+
+      setLoadingProfile(false);
+    }
+
+    loadExistingProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -37,7 +74,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    let logo_url: string | null = null;
+    let logo_url = existingLogoUrl;
 
     if (logoFile) {
       const path = `${user.id}/${Date.now()}-${logoFile.name}`;
@@ -79,10 +116,22 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   }
 
+  if (loadingProfile) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-md items-center justify-center px-6">
+        <p className="text-sm text-neutral-500">Loading…</p>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-6 py-12">
       <div>
-        <h1 className="text-2xl font-semibold">Set up your business</h1>
+        <h1 className="text-2xl font-semibold">
+          {existingLogoUrl || form.business_name
+            ? "Edit your business"
+            : "Set up your business"}
+        </h1>
         <p className="mt-1 text-sm text-neutral-500">
           This appears automatically on every invoice you send.
         </p>
@@ -101,6 +150,14 @@ export default function OnboardingPage() {
 
         <label className="flex flex-col gap-1 text-sm">
           Logo
+          {existingLogoUrl && !logoFile && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={existingLogoUrl}
+              alt="Current logo"
+              className="mb-1 h-12 w-12 rounded object-cover"
+            />
+          )}
           <input
             type="file"
             accept="image/*"

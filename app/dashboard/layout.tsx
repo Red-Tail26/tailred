@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
   { href: "/dashboard/inventory", label: "Inventory" },
   { href: "/dashboard/invoices", label: "Invoices" },
   { href: "/dashboard/plan", label: "Business Plan" },
   { href: "/dashboard/budget", label: "Budget Calculator" },
+  { href: "/onboarding", label: "Business Profile" },
 ];
 
 export default function DashboardLayout({
@@ -12,6 +17,15 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const supabase = createClient();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <div className="min-h-dvh pb-16 md:pb-0 md:pl-56">
       <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-neutral-200 bg-white py-2 md:inset-y-0 md:left-0 md:right-auto md:w-56 md:flex-col md:justify-start md:gap-1 md:border-t-0 md:border-r md:p-4">
@@ -27,6 +41,13 @@ export default function DashboardLayout({
             {item.label}
           </Link>
         ))}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="rounded-md px-3 py-2 text-center text-xs text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 md:mt-auto md:text-left md:text-sm"
+        >
+          Log out
+        </button>
       </nav>
       <main className="px-4 py-6 md:px-8">{children}</main>
     </div>
