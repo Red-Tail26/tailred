@@ -7,12 +7,13 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/*
+  Deliberately light-only for now: every page is built with explicit
+  light cards (bg-white / bg-neutral-50) and dark text. Following the
+  system dark-mode preference here would flip inherited text color to
+  near-white while those light card backgrounds stayed light, making
+  headings/paragraphs invisible against their own containers.
+*/
 
 body {
   color: var(--foreground);

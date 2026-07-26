@@ -1,11 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Home() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 text-center">
-      <div>
-        <h1 className="text-3xl font-semibold">Tailred</h1>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-500">
+      <div className="flex flex-col items-center gap-3">
+        <Image
+          src="/icons/icon-512.png"
+          alt="Tailred"
+          width={64}
+          height={64}
+          className="rounded-xl"
+          priority
+        />
+        <h1 className="text-3xl font-semibold text-neutral-900">Tailred</h1>
+        <p className="mx-auto max-w-sm text-sm text-neutral-500">
           Turn a side hustle into a running business — plan it, price it,
           track it, get paid.
         </p>
@@ -20,7 +29,7 @@ export default function Home() {
         </Link>
         <Link
           href="/login"
-          className="rounded-md border border-neutral-300 px-5 py-2.5 text-sm font-medium"
+          className="rounded-md border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900"
         >
           Log in
         </Link>
