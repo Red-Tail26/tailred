@@ -170,8 +170,9 @@ export default function OnboardingPage() {
           {hasExistingProfile ? "Edit your business" : "Set up your business"}
         </h1>
         <p className="mt-1 text-sm text-neutral-500">
-          This appears automatically on every invoice you send. Everything
-          below is optional — fill in what you have, skip the rest for now.
+          This appears automatically on every invoice you send. Pick what
+          kind of business this is to save — everything else below is
+          optional, fill it in whenever you&apos;re ready.
         </p>
       </div>
 
@@ -179,11 +180,15 @@ export default function OnboardingPage() {
         <label className="flex flex-col gap-1 text-sm">
           What kind of business is this?
           <select
+            aria-required="true"
+            required
             value={form.business_type}
             onChange={(e) => update("business_type", e.target.value)}
             className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
           >
-            <option value="">Select…</option>
+            <option value="" disabled>
+              Select…
+            </option>
             {BUSINESS_TYPES.map((t) => (
               <option key={t} value={t}>
                 {t}
