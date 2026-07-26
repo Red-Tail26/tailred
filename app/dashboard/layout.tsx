@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
-  { href: "/dashboard/inventory", label: "Inventory" },
-  { href: "/dashboard/invoices", label: "Invoices" },
-  { href: "/dashboard/plan", label: "Business Plan" },
-  { href: "/dashboard/budget", label: "Budget Calculator" },
   { href: "/onboarding", label: "Business Profile" },
+  { href: "/dashboard/budget", label: "Budget Calculator" },
+  { href: "/dashboard/plan", label: "Business Plan" },
+  { href: "/dashboard/invoices", label: "Invoices" },
+  { href: "/dashboard/inventory", label: "Inventory" },
 ];
 
 export default function DashboardLayout({
