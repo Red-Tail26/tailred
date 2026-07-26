@@ -10,6 +10,8 @@ const BUSINESS_TYPES = [
   "Repair",
   "Moving",
   "Cleaning",
+  "Power washing",
+  "Mobile detailing",
   "Tutoring",
   "Delivery",
   "Food cart / pop-up",
