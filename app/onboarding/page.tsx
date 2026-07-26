@@ -4,11 +4,25 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+const BUSINESS_TYPES = [
+  "Reselling",
+  "Repair",
+  "Moving",
+  "Cleaning",
+  "Tutoring",
+  "Delivery",
+  "Food cart / pop-up",
+  "Home / social food sales",
+  "Product brand",
+  "Other",
+];
+
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
   const [form, setForm] = useState({
     business_name: "",
+    business_type: "",
     address: "",
     phone: "",
     website: "",
@@ -40,6 +54,7 @@ export default function OnboardingPage() {
       if (profile) {
         setForm({
           business_name: profile.business_name ?? "",
+          business_type: profile.business_type ?? "",
           address: profile.address ?? "",
           phone: profile.phone ?? "",
           website: profile.website ?? "",
@@ -57,6 +72,10 @@ export default function OnboardingPage() {
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function handleSkip() {
+    router.push("/dashboard");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -98,6 +117,7 @@ export default function OnboardingPage() {
         {
           user_id: user.id,
           business_name: form.business_name,
+          business_type: form.business_type || null,
           address: form.address,
           phone: form.phone,
           website: form.website,
@@ -133,11 +153,28 @@ export default function OnboardingPage() {
             : "Set up your business"}
         </h1>
         <p className="mt-1 text-sm text-neutral-500">
-          This appears automatically on every invoice you send.
+          This appears automatically on every invoice you send. You can skip
+          this and fill it in later.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <label className="flex flex-col gap-1 text-sm">
+          What kind of business is this?
+          <select
+            value={form.business_type}
+            onChange={(e) => update("business_type", e.target.value)}
+            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
+          >
+            <option value="">Select…</option>
+            {BUSINESS_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className="flex flex-col gap-1 text-sm">
           Business name
           <input
@@ -188,7 +225,8 @@ export default function OnboardingPage() {
         <label className="flex flex-col gap-1 text-sm">
           Website
           <input
-            type="url"
+            type="text"
+            placeholder="yourbusiness.com"
             value={form.website}
             onChange={(e) => update("website", e.target.value)}
             className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
@@ -213,6 +251,14 @@ export default function OnboardingPage() {
           className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           {loading ? "Saving…" : "Save and continue"}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="text-sm font-medium text-neutral-500 underline"
+        >
+          Skip for now
         </button>
       </form>
     </main>
