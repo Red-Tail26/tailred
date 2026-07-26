@@ -5,6 +5,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/client";
 import { buildVCard } from "@/lib/vcard";
+import { LEGIT_CHECKLIST } from "@/lib/legitChecklist";
 
 type Profile = {
   business_name: string | null;
@@ -51,6 +52,7 @@ export default function DashboardPage() {
     paidCount: 0,
   });
   const [budget, setBudget] = useState<BudgetSummary | null>(null);
+  const [legitDone, setLegitDone] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,29 +66,39 @@ export default function DashboardPage() {
         return;
       }
 
-      const [{ data: profileData }, { data: items }, { data: invoices }, { data: budgetPlan }] =
-        await Promise.all([
-          supabase
-            .from("business_profile")
-            .select(
-              "business_name, business_type, logo_url, address, phone, website, social_links"
-            )
-            .eq("user_id", user.id)
-            .maybeSingle(),
-          supabase
-            .from("inventory_items")
-            .select("status, sale_price, cogs")
-            .eq("user_id", user.id),
-          supabase
-            .from("invoices")
-            .select("status")
-            .eq("user_id", user.id),
-          supabase
-            .from("budget_plans")
-            .select("startup_costs, monthly_burn, monthly_revenue")
-            .eq("user_id", user.id)
-            .maybeSingle(),
-        ]);
+      const [
+        { data: profileData },
+        { data: items },
+        { data: invoices },
+        { data: budgetPlan },
+        { data: checklistProgress },
+      ] = await Promise.all([
+        supabase
+          .from("business_profile")
+          .select(
+            "business_name, business_type, logo_url, address, phone, website, social_links"
+          )
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("inventory_items")
+          .select("status, sale_price, cogs")
+          .eq("user_id", user.id),
+        supabase
+          .from("invoices")
+          .select("status")
+          .eq("user_id", user.id),
+        supabase
+          .from("budget_plans")
+          .select("startup_costs, monthly_burn, monthly_revenue")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("business_checklist")
+          .select("completed_items")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
 
       setProfile(profileData ?? null);
       setHasProfile(!!profileData);
@@ -130,6 +142,12 @@ export default function DashboardPage() {
         setBudget({ totalStartup, monthlyNet, breakevenMonths });
       }
 
+      if (checklistProgress) {
+        setLegitDone(
+          ((checklistProgress.completed_items as string[]) ?? []).length
+        );
+      }
+
       setLoading(false);
     }
 
@@ -171,6 +189,11 @@ export default function DashboardPage() {
       label: "Run your budget numbers",
       done: !!budget,
       href: "/dashboard/budget",
+    },
+    {
+      label: "Start the getting-legit checklist",
+      done: legitDone > 0,
+      href: "/dashboard/legit",
     },
   ];
 
@@ -278,6 +301,36 @@ export default function DashboardPage() {
               </dd>
             </div>
           </dl>
+        </div>
+      )}
+
+      {/* Getting legit summary */}
+      {legitDone > 0 && (
+        <div className="rounded-lg border border-neutral-200 p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-neutral-700">
+              Getting legit
+            </h2>
+            <Link
+              href="/dashboard/legit"
+              className="text-xs font-medium text-neutral-600 underline"
+            >
+              View checklist
+            </Link>
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
+              <div
+                className="h-full rounded-full bg-emerald-600"
+                style={{
+                  width: `${(legitDone / LEGIT_CHECKLIST.length) * 100}%`,
+                }}
+              />
+            </div>
+            <span className="text-xs text-neutral-500">
+              {legitDone}/{LEGIT_CHECKLIST.length}
+            </span>
+          </div>
         </div>
       )}
 
