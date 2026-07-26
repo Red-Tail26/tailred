@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BackToDashboard from "@/components/BackToDashboard";
 import { createClient } from "@/lib/supabase/client";
 import { LEGIT_CHECKLIST } from "@/lib/legitChecklist";
@@ -8,6 +8,9 @@ import { LEGIT_CHECKLIST } from "@/lib/legitChecklist";
 export default function LegitChecklistPage() {
   const supabase = createClient();
   const [completed, setCompleted] = useState<Set<string>>(new Set());
+  // Mirrors `completed` synchronously so rapid clicks each build on the
+  // latest set instead of a stale value captured in a render's closure.
+  const completedRef = useRef<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +32,9 @@ export default function LegitChecklistPage() {
         .maybeSingle();
 
       if (data) {
-        setCompleted(new Set((data.completed_items as string[]) ?? []));
+        const loaded = new Set((data.completed_items as string[]) ?? []);
+        completedRef.current = loaded;
+        setCompleted(loaded);
       }
 
       setLoading(false);
@@ -40,12 +45,16 @@ export default function LegitChecklistPage() {
   }, []);
 
   async function toggle(key: string) {
-    const next = new Set(completed);
+    setError(null);
+
+    const previous = completedRef.current;
+    const next = new Set(previous);
     if (next.has(key)) {
       next.delete(key);
     } else {
       next.add(key);
     }
+    completedRef.current = next;
     setCompleted(next);
 
     const {
@@ -53,6 +62,8 @@ export default function LegitChecklistPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
+      completedRef.current = previous;
+      setCompleted(previous);
       setError("You need to be logged in.");
       return;
     }
@@ -67,7 +78,11 @@ export default function LegitChecklistPage() {
         { onConflict: "user_id" }
       );
 
-    if (upsertError) setError(upsertError.message);
+    if (upsertError) {
+      completedRef.current = previous;
+      setCompleted(previous);
+      setError(upsertError.message);
+    }
   }
 
   if (loading) {
