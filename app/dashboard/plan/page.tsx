@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import BackToDashboard from "@/components/BackToDashboard";
 
 type Intake = {
   idea: string;
@@ -53,6 +54,7 @@ export default function PlanPage() {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-8">
+      <BackToDashboard />
       <div>
         <h1 className="text-xl font-semibold">Business plan</h1>
         <p className="mt-1 text-sm text-neutral-500">

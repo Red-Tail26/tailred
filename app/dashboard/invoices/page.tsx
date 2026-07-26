@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import BackToDashboard from "@/components/BackToDashboard";
 
 type Invoice = {
   id: string;
@@ -177,6 +178,7 @@ export default function InvoicesPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <BackToDashboard />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Invoices</h1>
         <button

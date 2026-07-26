@@ -30,7 +30,10 @@ export default function DashboardLayout({
   return (
     <div className="min-h-dvh pb-16 md:pb-0 md:pl-56">
       <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-neutral-200 bg-white py-2 md:inset-y-0 md:left-0 md:right-auto md:w-56 md:flex-col md:justify-start md:gap-1 md:border-t-0 md:border-r md:p-4">
-        <div className="hidden items-center gap-2 px-2 pb-4 md:flex">
+        <Link
+          href="/dashboard"
+          className="hidden items-center gap-2 px-2 pb-4 md:flex"
+        >
           <Image
             src="/icons/icon-192.png"
             alt="Tailred"
@@ -41,7 +44,7 @@ export default function DashboardLayout({
           <span className="text-lg font-semibold text-neutral-900">
             Tailred
           </span>
-        </div>
+        </Link>
         {navItems.map((item) => (
           <Link
             key={item.href}

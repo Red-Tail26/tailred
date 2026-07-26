@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BackToDashboard from "@/components/BackToDashboard";
 
 const BUSINESS_TYPES = [
   "Reselling",
@@ -146,6 +147,7 @@ export default function OnboardingPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-6 py-12">
+      <BackToDashboard />
       <div>
         <h1 className="text-2xl font-semibold">
           {existingLogoUrl || form.business_name

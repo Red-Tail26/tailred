@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import BackToDashboard from "@/components/BackToDashboard";
 
 type Status = "sourced" | "listed" | "sold";
 
@@ -161,6 +162,7 @@ export default function InventoryPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      <BackToDashboard />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Inventory</h1>
