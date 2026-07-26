@@ -24,8 +24,18 @@ type Stats = {
   paidCount: number;
 };
 
+type BudgetSummary = {
+  totalStartup: number;
+  monthlyNet: number;
+  breakevenMonths: number | null;
+};
+
 function currency(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+function sumLineItems(items: { amount: string }[]) {
+  return items.reduce((total, i) => total + (parseFloat(i.amount) || 0), 0);
 }
 
 export default function DashboardPage() {
@@ -40,6 +50,7 @@ export default function DashboardPage() {
     invoiceCount: 0,
     paidCount: 0,
   });
+  const [budget, setBudget] = useState<BudgetSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,7 +64,7 @@ export default function DashboardPage() {
         return;
       }
 
-      const [{ data: profileData }, { data: items }, { data: invoices }] =
+      const [{ data: profileData }, { data: items }, { data: invoices }, { data: budgetPlan }] =
         await Promise.all([
           supabase
             .from("business_profile")
@@ -70,6 +81,11 @@ export default function DashboardPage() {
             .from("invoices")
             .select("status")
             .eq("user_id", user.id),
+          supabase
+            .from("budget_plans")
+            .select("startup_costs, monthly_burn, monthly_revenue")
+            .eq("user_id", user.id)
+            .maybeSingle(),
         ]);
 
       setProfile(profileData ?? null);
@@ -100,6 +116,19 @@ export default function DashboardPage() {
         invoiceCount: (invoices ?? []).length,
         paidCount: (invoices ?? []).filter((i) => i.status === "paid").length,
       });
+
+      if (budgetPlan) {
+        const startupCosts =
+          (budgetPlan.startup_costs as { amount: string }[]) ?? [];
+        const monthlyBurn =
+          (budgetPlan.monthly_burn as { amount: string }[]) ?? [];
+        const totalStartup = sumLineItems(startupCosts);
+        const totalBurn = sumLineItems(monthlyBurn);
+        const monthlyNet = (budgetPlan.monthly_revenue ?? 0) - totalBurn;
+        const breakevenMonths =
+          monthlyNet > 0 ? Math.ceil(totalStartup / monthlyNet) : null;
+        setBudget({ totalStartup, monthlyNet, breakevenMonths });
+      }
 
       setLoading(false);
     }
@@ -137,6 +166,11 @@ export default function DashboardPage() {
       label: "Get paid (Stripe Connect — coming soon)",
       done: stats.paidCount > 0,
       href: "/dashboard/invoices",
+    },
+    {
+      label: "Run your budget numbers",
+      done: !!budget,
+      href: "/dashboard/budget",
     },
   ];
 
@@ -201,6 +235,51 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* Budget summary */}
+      {budget && (
+        <div className="rounded-lg border border-neutral-200 p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-neutral-700">
+              Budget
+            </h2>
+            <Link
+              href="/dashboard/budget"
+              className="text-xs font-medium text-neutral-600 underline"
+            >
+              Edit
+            </Link>
+          </div>
+          <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div>
+              <dt className="text-xs text-neutral-500">Startup costs</dt>
+              <dd className="text-base font-semibold text-neutral-900">
+                {currency(budget.totalStartup)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-neutral-500">Monthly profit</dt>
+              <dd
+                className={`text-base font-semibold ${
+                  budget.monthlyNet >= 0
+                    ? "text-emerald-700"
+                    : "text-red-600"
+                }`}
+              >
+                {currency(budget.monthlyNet)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-neutral-500">Breakeven</dt>
+              <dd className="text-base font-semibold text-neutral-900">
+                {budget.breakevenMonths === null
+                  ? "Not yet"
+                  : `${budget.breakevenMonths} mo`}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      )}
 
       {/* Getting started checklist */}
       <div>

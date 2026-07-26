@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BackToDashboard from "@/components/BackToDashboard";
+import { createClient } from "@/lib/supabase/client";
 
 type LineItem = { id: string; label: string; amount: string };
 
@@ -73,16 +74,70 @@ function LineItemsEditor({
   );
 }
 
+const DEFAULT_STARTUP = [
+  { label: "Inventory / first batch", amount: "" },
+  { label: "Supplies or tools", amount: "" },
+];
+const DEFAULT_BURN = [
+  { label: "Platform / listing fees", amount: "" },
+  { label: "Packaging & shipping", amount: "" },
+];
+
 export default function BudgetPage() {
-  const [startupCosts, setStartupCosts] = useState<LineItem[]>([
-    newItem("Inventory / first batch"),
-    newItem("Supplies or tools"),
-  ]);
-  const [monthlyBurn, setMonthlyBurn] = useState<LineItem[]>([
-    newItem("Platform / listing fees"),
-    newItem("Packaging & shipping"),
-  ]);
+  const supabase = createClient();
+  const [startupCosts, setStartupCosts] = useState<LineItem[]>(
+    DEFAULT_STARTUP.map((i) => newItem(i.label))
+  );
+  const [monthlyBurn, setMonthlyBurn] = useState<LineItem[]>(
+    DEFAULT_BURN.map((i) => newItem(i.label))
+  );
   const [monthlyRevenue, setMonthlyRevenue] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: plan } = await supabase
+        .from("budget_plans")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (plan) {
+        const startup = (plan.startup_costs as { label: string; amount: string }[]) ?? [];
+        const burn = (plan.monthly_burn as { label: string; amount: string }[]) ?? [];
+        setStartupCosts(
+          startup.length
+            ? startup.map((i) => ({ id: crypto.randomUUID(), ...i }))
+            : DEFAULT_STARTUP.map((i) => newItem(i.label))
+        );
+        setMonthlyBurn(
+          burn.length
+            ? burn.map((i) => ({ id: crypto.randomUUID(), ...i }))
+            : DEFAULT_BURN.map((i) => newItem(i.label))
+        );
+        setMonthlyRevenue(
+          plan.monthly_revenue ? String(plan.monthly_revenue) : ""
+        );
+      }
+
+      setLoading(false);
+    }
+
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totalStartup = sum(startupCosts);
   const totalBurn = sum(monthlyBurn);
@@ -90,6 +145,58 @@ export default function BudgetPage() {
   const monthlyNet = revenue - totalBurn;
   const breakevenMonths =
     monthlyNet > 0 ? Math.ceil(totalStartup / monthlyNet) : null;
+
+  async function handleSave() {
+    setSaving(true);
+    setSaved(false);
+    setError(null);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setError("You need to be logged in.");
+      setSaving(false);
+      return;
+    }
+
+    const { error: upsertError } = await supabase
+      .from("budget_plans")
+      .upsert(
+        {
+          user_id: user.id,
+          startup_costs: startupCosts.map(({ label, amount }) => ({
+            label,
+            amount,
+          })),
+          monthly_burn: monthlyBurn.map(({ label, amount }) => ({
+            label,
+            amount,
+          })),
+          monthly_revenue: revenue,
+        },
+        { onConflict: "user_id" }
+      );
+
+    if (upsertError) {
+      setError(upsertError.message);
+      setSaving(false);
+      return;
+    }
+
+    setSaving(false);
+    setSaved(true);
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex max-w-lg flex-col gap-8">
+        <BackToDashboard />
+        <p className="text-sm text-neutral-500">Loading…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-8">
@@ -137,7 +244,10 @@ export default function BudgetPage() {
           type="number"
           inputMode="decimal"
           value={monthlyRevenue}
-          onChange={(e) => setMonthlyRevenue(e.target.value)}
+          onChange={(e) => {
+            setMonthlyRevenue(e.target.value);
+            setSaved(false);
+          }}
           placeholder="$0"
           className="w-40 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
         />
@@ -166,6 +276,24 @@ export default function BudgetPage() {
           </div>
         </dl>
       </section>
+
+      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        >
+          {saving ? "Saving…" : "Save budget"}
+        </button>
+        {saved && (
+          <span className="text-sm text-emerald-700">
+            Saved — this now shows on your dashboard.
+          </span>
+        )}
+      </div>
 
       <p className="text-xs text-neutral-400">
         Informational only — not legal, tax, or financial advice.
