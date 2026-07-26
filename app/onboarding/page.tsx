@@ -18,6 +18,8 @@ const BUSINESS_TYPES = [
   "Other",
 ];
 
+const MAX_LOGO_BYTES = 5 * 1024 * 1024; // 5MB
+
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -31,6 +33,8 @@ export default function OnboardingPage() {
   });
   const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [hasExistingProfile, setHasExistingProfile] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -62,6 +66,7 @@ export default function OnboardingPage() {
           social_links: profile.social_links ?? "",
         });
         setExistingLogoUrl(profile.logo_url ?? null);
+        setHasExistingProfile(true);
       }
 
       setLoadingProfile(false);
@@ -73,6 +78,18 @@ export default function OnboardingPage() {
 
   function update<K extends keyof typeof form>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function handleLogoChange(file: File | null) {
+    setLogoError(null);
+
+    if (file && file.size > MAX_LOGO_BYTES) {
+      setLogoError("That image is too large — please pick one under 5MB.");
+      setLogoFile(null);
+      return;
+    }
+
+    setLogoFile(file);
   }
 
   async function handleSkip() {
@@ -117,12 +134,12 @@ export default function OnboardingPage() {
       .upsert(
         {
           user_id: user.id,
-          business_name: form.business_name,
+          business_name: form.business_name || null,
           business_type: form.business_type || null,
-          address: form.address,
-          phone: form.phone,
-          website: form.website,
-          social_links: form.social_links,
+          address: form.address || null,
+          phone: form.phone || null,
+          website: form.website || null,
+          social_links: form.social_links || null,
           logo_url,
         },
         { onConflict: "user_id" }
@@ -150,13 +167,11 @@ export default function OnboardingPage() {
       <BackToDashboard />
       <div>
         <h1 className="text-2xl font-semibold">
-          {existingLogoUrl || form.business_name
-            ? "Edit your business"
-            : "Set up your business"}
+          {hasExistingProfile ? "Edit your business" : "Set up your business"}
         </h1>
         <p className="mt-1 text-sm text-neutral-500">
-          This appears automatically on every invoice you send. You can skip
-          this and fill it in later.
+          This appears automatically on every invoice you send. Everything
+          below is optional — fill in what you have, skip the rest for now.
         </p>
       </div>
 
@@ -178,35 +193,44 @@ export default function OnboardingPage() {
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Business name
+          Business name <span className="text-neutral-400">(optional)</span>
           <input
-            required
             value={form.business_name}
             onChange={(e) => update("business_name", e.target.value)}
+            placeholder="e.g. Jordan's Resale Corner"
             className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
           />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Logo
-          {existingLogoUrl && !logoFile && (
+          Logo <span className="text-neutral-400">(optional)</span>
+          {existingLogoUrl && !logoFile ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={existingLogoUrl}
               alt="Current logo"
               className="mb-1 h-12 w-12 rounded object-cover"
             />
+          ) : (
+            <div className="mb-1 flex h-12 w-12 items-center justify-center rounded bg-neutral-100 text-lg font-semibold text-neutral-400">
+              {form.business_name?.[0]?.toUpperCase() ?? "?"}
+            </div>
           )}
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => handleLogoChange(e.target.files?.[0] ?? null)}
             className="text-sm"
           />
+          <span className="text-xs text-neutral-400">
+            No logo yet? No problem — we&apos;ll show your initial until you
+            add one. Max 5MB.
+          </span>
+          {logoError && <p className="text-sm text-red-600">{logoError}</p>}
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Address
+          Address <span className="text-neutral-400">(optional)</span>
           <input
             value={form.address}
             onChange={(e) => update("address", e.target.value)}
@@ -215,7 +239,7 @@ export default function OnboardingPage() {
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Phone
+          Phone <span className="text-neutral-400">(optional)</span>
           <input
             type="tel"
             value={form.phone}
@@ -225,7 +249,7 @@ export default function OnboardingPage() {
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Website
+          Website <span className="text-neutral-400">(optional)</span>
           <input
             type="text"
             placeholder="yourbusiness.com"
@@ -236,7 +260,7 @@ export default function OnboardingPage() {
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Social links
+          Social links <span className="text-neutral-400">(optional)</span>
           <input
             placeholder="@yourbusiness"
             value={form.social_links}

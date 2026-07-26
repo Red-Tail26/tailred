@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/client";
+import { buildVCard } from "@/lib/vcard";
 
 type Profile = {
-  business_name: string;
+  business_name: string | null;
   business_type: string | null;
   logo_url: string | null;
   address: string | null;
   phone: string | null;
   website: string | null;
+  social_links: string | null;
 };
 
 type Stats = {
@@ -28,6 +31,8 @@ function currency(n: number) {
 export default function DashboardPage() {
   const supabase = createClient();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [hasProfile, setHasProfile] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats>({
     itemCount: 0,
     soldCount: 0,
@@ -52,7 +57,9 @@ export default function DashboardPage() {
         await Promise.all([
           supabase
             .from("business_profile")
-            .select("business_name, business_type, logo_url, address, phone, website")
+            .select(
+              "business_name, business_type, logo_url, address, phone, website, social_links"
+            )
             .eq("user_id", user.id)
             .maybeSingle(),
           supabase
@@ -66,6 +73,19 @@ export default function DashboardPage() {
         ]);
 
       setProfile(profileData ?? null);
+      setHasProfile(!!profileData);
+
+      if (profileData) {
+        try {
+          const dataUrl = await QRCode.toDataURL(buildVCard(profileData), {
+            width: 200,
+            margin: 1,
+          });
+          setQrDataUrl(dataUrl);
+        } catch {
+          setQrDataUrl(null);
+        }
+      }
 
       const soldItems = (items ?? []).filter((i) => i.status === "sold");
       const totalProfit = soldItems.reduce(
@@ -95,7 +115,7 @@ export default function DashboardPage() {
   const checklist = [
     {
       label: "Set up your business profile",
-      done: !!profile?.business_name,
+      done: hasProfile,
       href: "/onboarding",
     },
     {
@@ -120,6 +140,8 @@ export default function DashboardPage() {
     },
   ];
 
+  const displayName = profile?.business_name || (hasProfile ? "Unnamed business" : "Set up your business");
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       {/* Business card */}
@@ -128,17 +150,17 @@ export default function DashboardPage() {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={profile.logo_url}
-            alt={profile.business_name}
+            alt={displayName}
             className="h-14 w-14 rounded object-cover"
           />
         ) : (
           <div className="flex h-14 w-14 items-center justify-center rounded bg-neutral-200 text-lg font-semibold text-neutral-500">
-            {profile?.business_name?.[0]?.toUpperCase() ?? "?"}
+            {displayName[0]?.toUpperCase() ?? "?"}
           </div>
         )}
         <div className="flex-1">
           <h1 className="text-lg font-semibold text-neutral-900">
-            {profile?.business_name || "Set up your business"}
+            {displayName}
           </h1>
           <p className="text-sm text-neutral-500">
             {profile?.business_type || "No business type set yet"}
@@ -215,6 +237,34 @@ export default function DashboardPage() {
           ))}
         </ul>
       </div>
+
+      {/* QR code */}
+      {hasProfile && qrDataUrl && (
+        <div className="flex items-center gap-4 rounded-lg border border-neutral-200 p-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={qrDataUrl}
+            alt="QR code for your business card"
+            className="h-24 w-24 flex-shrink-0"
+          />
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-neutral-700">
+              Your business QR code
+            </h2>
+            <p className="mt-1 text-xs text-neutral-500">
+              Scan it to save your business as a contact — great for
+              pop-ups, markets, or in-person handoffs.
+            </p>
+            <a
+              href={qrDataUrl}
+              download="tailred-business-qr.png"
+              className="mt-2 inline-block text-xs font-medium text-neutral-700 underline"
+            >
+              Download QR code
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
