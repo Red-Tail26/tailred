@@ -176,6 +176,13 @@ export default function InvoicesPage() {
     else loadAll();
   }
 
+  async function deleteDraft(invoiceId: string) {
+    if (!window.confirm("Delete this draft invoice?")) return;
+    const { error } = await supabase.from("invoices").delete().eq("id", invoiceId);
+    if (error) setError(error.message);
+    else loadAll();
+  }
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <BackToDashboard />
@@ -333,13 +340,23 @@ export default function InvoicesPage() {
                   View link
                 </Link>
                 {invoice.status === "draft" && (
-                  <button
-                    type="button"
-                    onClick={() => markSent(invoice.id)}
-                    className="text-xs font-medium text-neutral-700 underline"
-                  >
-                    Mark sent
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => markSent(invoice.id)}
+                      className="text-xs font-medium text-neutral-700 underline"
+                    >
+                      Mark sent
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteDraft(invoice.id)}
+                      className="text-xs font-medium text-neutral-400 hover:text-red-600"
+                      aria-label="Delete draft invoice"
+                    >
+                      ×
+                    </button>
+                  </>
                 )}
                 {invoice.status === "sent" && (
                   <button

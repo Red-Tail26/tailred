@@ -45,6 +45,14 @@ const PLATFORM_OPTIONS = [
   "Other",
 ];
 
+const EMPTY_FORM = {
+  item_name: "",
+  cogs: "",
+  list_price: "",
+  platform: "",
+  platformOther: "",
+};
+
 export default function InventoryPage() {
   const supabase = createClient();
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -52,13 +60,8 @@ export default function InventoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
-  const [newItem, setNewItem] = useState({
-    item_name: "",
-    cogs: "",
-    list_price: "",
-    platform: "",
-    platformOther: "",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   async function loadItems() {
     setLoading(true);
@@ -80,7 +83,33 @@ export default function InventoryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleAddItem(e: React.FormEvent) {
+  function startAdd() {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setShowForm(true);
+  }
+
+  function startEdit(item: InventoryItem) {
+    const isKnownPlatform =
+      item.platform && PLATFORM_OPTIONS.includes(item.platform);
+    setEditingId(item.id);
+    setFormData({
+      item_name: item.item_name,
+      cogs: String(item.cogs),
+      list_price: item.list_price !== null ? String(item.list_price) : "",
+      platform: isKnownPlatform ? item.platform! : item.platform ? "Other" : "",
+      platformOther: isKnownPlatform ? "" : item.platform ?? "",
+    });
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -93,32 +122,32 @@ export default function InventoryPage() {
     }
 
     const resolvedPlatform =
-      newItem.platform === "Other"
-        ? newItem.platformOther || null
-        : newItem.platform || null;
+      formData.platform === "Other"
+        ? formData.platformOther || null
+        : formData.platform || null;
 
-    const { error } = await supabase.from("inventory_items").insert({
-      user_id: user.id,
-      item_name: newItem.item_name,
-      cogs: parseFloat(newItem.cogs) || 0,
-      list_price: newItem.list_price ? parseFloat(newItem.list_price) : null,
+    const payload = {
+      item_name: formData.item_name,
+      cogs: parseFloat(formData.cogs) || 0,
+      list_price: formData.list_price ? parseFloat(formData.list_price) : null,
       platform: resolvedPlatform,
-      status: "sourced",
-    });
+    };
+
+    const { error } = editingId
+      ? await supabase
+          .from("inventory_items")
+          .update(payload)
+          .eq("id", editingId)
+      : await supabase
+          .from("inventory_items")
+          .insert({ ...payload, user_id: user.id, status: "sourced" });
 
     if (error) {
       setError(error.message);
       return;
     }
 
-    setNewItem({
-      item_name: "",
-      cogs: "",
-      list_price: "",
-      platform: "",
-      platformOther: "",
-    });
-    setShowForm(false);
+    cancelForm();
     loadItems();
   }
 
@@ -175,7 +204,7 @@ export default function InventoryPage() {
         </div>
         <button
           type="button"
-          onClick={() => setShowForm((s) => !s)}
+          onClick={() => (showForm ? cancelForm() : startAdd())}
           className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
         >
           {showForm ? "Cancel" : "+ Add item"}
@@ -184,17 +213,20 @@ export default function InventoryPage() {
 
       {showForm && (
         <form
-          onSubmit={handleAddItem}
+          onSubmit={handleSubmit}
           className="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4"
         >
+          <h2 className="text-sm font-semibold text-neutral-700">
+            {editingId ? "Edit item" : "New item"}
+          </h2>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
               Item name
               <input
                 required
-                value={newItem.item_name}
+                value={formData.item_name}
                 onChange={(e) =>
-                  setNewItem((f) => ({ ...f, item_name: e.target.value }))
+                  setFormData((f) => ({ ...f, item_name: e.target.value }))
                 }
                 className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
               />
@@ -202,9 +234,9 @@ export default function InventoryPage() {
             <label className="flex flex-col gap-1 text-sm">
               Platform
               <select
-                value={newItem.platform}
+                value={formData.platform}
                 onChange={(e) =>
-                  setNewItem((f) => ({ ...f, platform: e.target.value }))
+                  setFormData((f) => ({ ...f, platform: e.target.value }))
                 }
                 className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
               >
@@ -215,12 +247,12 @@ export default function InventoryPage() {
                   </option>
                 ))}
               </select>
-              {newItem.platform === "Other" && (
+              {formData.platform === "Other" && (
                 <input
                   placeholder="Platform name"
-                  value={newItem.platformOther}
+                  value={formData.platformOther}
                   onChange={(e) =>
-                    setNewItem((f) => ({ ...f, platformOther: e.target.value }))
+                    setFormData((f) => ({ ...f, platformOther: e.target.value }))
                   }
                   className="mt-1 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
                 />
@@ -232,9 +264,9 @@ export default function InventoryPage() {
                 type="number"
                 inputMode="decimal"
                 required
-                value={newItem.cogs}
+                value={formData.cogs}
                 onChange={(e) =>
-                  setNewItem((f) => ({ ...f, cogs: e.target.value }))
+                  setFormData((f) => ({ ...f, cogs: e.target.value }))
                 }
                 className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
               />
@@ -244,20 +276,31 @@ export default function InventoryPage() {
               <input
                 type="number"
                 inputMode="decimal"
-                value={newItem.list_price}
+                value={formData.list_price}
                 onChange={(e) =>
-                  setNewItem((f) => ({ ...f, list_price: e.target.value }))
+                  setFormData((f) => ({ ...f, list_price: e.target.value }))
                 }
                 className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
               />
             </label>
           </div>
-          <button
-            type="submit"
-            className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
-          >
-            Save item
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+            >
+              {editingId ? "Save changes" : "Save item"}
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={cancelForm}
+                className="self-start rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       )}
 
@@ -327,14 +370,24 @@ export default function InventoryPage() {
                       {itemProfit === null ? "—" : currency(itemProfit)}
                     </td>
                     <td className="py-2 pr-3">
-                      <button
-                        type="button"
-                        onClick={() => deleteItem(item.id)}
-                        className="text-neutral-400 hover:text-red-600"
-                        aria-label="Delete item"
-                      >
-                        ×
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(item)}
+                          className="text-neutral-400 hover:text-neutral-700"
+                          aria-label="Edit item"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteItem(item.id)}
+                          className="text-neutral-400 hover:text-red-600"
+                          aria-label="Delete item"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

@@ -112,6 +112,7 @@ export default function OnboardingPage() {
     }
 
     let logo_url = existingLogoUrl;
+    const previousLogoUrl = existingLogoUrl;
 
     if (logoFile) {
       const path = `${user.id}/${Date.now()}-${logoFile.name}`;
@@ -149,6 +150,15 @@ export default function OnboardingPage() {
       setError(upsertError.message);
       setLoading(false);
       return;
+    }
+
+    // Clean up the old logo file now that the new one is saved — best
+    // effort only, a failure here shouldn't block the user.
+    if (logoFile && previousLogoUrl) {
+      const oldPath = previousLogoUrl.split("/logos/")[1];
+      if (oldPath) {
+        await supabase.storage.from("logos").remove([oldPath]);
+      }
     }
 
     router.push("/dashboard");
