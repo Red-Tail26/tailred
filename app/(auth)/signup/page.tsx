@@ -12,6 +12,8 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirmationSent, setConfirmationSent] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [resending, setResending] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +38,26 @@ export default function SignUpPage() {
     router.push("/onboarding");
   }
 
+  async function handleResend() {
+    setResending(true);
+    setResent(false);
+    setError(null);
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+
+    if (error) {
+      setError(error.message);
+      setResending(false);
+      return;
+    }
+
+    setResent(true);
+    setResending(false);
+  }
+
   if (confirmationSent) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-4 px-6 text-center">
@@ -44,6 +66,20 @@ export default function SignUpPage() {
           We sent a confirmation link to <strong>{email}</strong>. Click it,
           then come back and log in.
         </p>
+
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={resending}
+          className="mt-1 text-sm font-medium text-neutral-600 underline disabled:opacity-50"
+        >
+          {resending ? "Resending…" : "Didn't get it? Resend email"}
+        </button>
+        {resent && (
+          <p className="text-sm text-emerald-700">Sent again — check your inbox.</p>
+        )}
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
         <a
           href="/login"
           className="mt-2 font-medium text-neutral-900 underline"

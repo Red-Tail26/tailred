@@ -1,25 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
-  const router = useRouter();
+export default function ForgotPasswordPage() {
   const supabase = createClient();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     });
 
     if (error) {
@@ -28,22 +25,35 @@ export default function LoginPage() {
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("business_profile")
-      .select("id")
-      .eq("user_id", data.user.id)
-      .maybeSingle();
+    setSent(true);
+    setLoading(false);
+  }
 
-    router.push(profile ? "/dashboard" : "/onboarding");
-    router.refresh();
+  if (sent) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-4 px-6 text-center">
+        <h1 className="text-2xl font-semibold">Check your email</h1>
+        <p className="text-sm text-neutral-500">
+          If <strong>{email}</strong> has an account, we sent a link to
+          reset your password.
+        </p>
+        <a
+          href="/login"
+          className="mt-2 font-medium text-neutral-900 underline"
+        >
+          Back to log in
+        </a>
+      </main>
+    );
   }
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 px-6">
       <div>
-        <h1 className="text-2xl font-semibold">Log in</h1>
+        <h1 className="text-2xl font-semibold">Reset your password</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Welcome back to Tailred.
+          Enter your email and we&apos;ll send you a link to set a new
+          password.
         </p>
       </div>
 
@@ -59,25 +69,6 @@ export default function LoginPage() {
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          <div className="flex items-center justify-between">
-            <span>Password</span>
-            <a
-              href="/forgot-password"
-              className="text-xs font-medium text-neutral-500 underline"
-            >
-              Forgot password?
-            </a>
-          </div>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-neutral-900"
-          />
-        </label>
-
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
@@ -85,14 +76,13 @@ export default function LoginPage() {
           disabled={loading}
           className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          {loading ? "Logging in…" : "Log in"}
+          {loading ? "Sending…" : "Send reset link"}
         </button>
       </form>
 
       <p className="text-sm text-neutral-500">
-        Don&apos;t have an account?{" "}
-        <a href="/signup" className="font-medium text-neutral-900 underline">
-          Sign up
+        <a href="/login" className="font-medium text-neutral-900 underline">
+          Back to log in
         </a>
       </p>
     </main>
