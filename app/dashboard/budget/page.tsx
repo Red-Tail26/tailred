@@ -95,6 +95,8 @@ export default function BudgetPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [hasSavedPlan, setHasSavedPlan] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -130,6 +132,7 @@ export default function BudgetPage() {
         setMonthlyRevenue(
           plan.monthly_revenue ? String(plan.monthly_revenue) : ""
         );
+        setHasSavedPlan(true);
       }
 
       setLoading(false);
@@ -187,6 +190,48 @@ export default function BudgetPage() {
 
     setSaving(false);
     setSaved(true);
+    setHasSavedPlan(true);
+  }
+
+  async function handleClear() {
+    if (
+      !window.confirm(
+        "Clear your saved budget? This removes it from your dashboard and resets these numbers."
+      )
+    ) {
+      return;
+    }
+
+    setClearing(true);
+    setError(null);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setError("You need to be logged in.");
+      setClearing(false);
+      return;
+    }
+
+    const { error: deleteError } = await supabase
+      .from("budget_plans")
+      .delete()
+      .eq("user_id", user.id);
+
+    if (deleteError) {
+      setError(deleteError.message);
+      setClearing(false);
+      return;
+    }
+
+    setStartupCosts(DEFAULT_STARTUP.map((i) => newItem(i.label)));
+    setMonthlyBurn(DEFAULT_BURN.map((i) => newItem(i.label)));
+    setMonthlyRevenue("");
+    setHasSavedPlan(false);
+    setSaved(false);
+    setClearing(false);
   }
 
   if (loading) {
@@ -279,7 +324,7 @@ export default function BudgetPage() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={handleSave}
@@ -288,6 +333,16 @@ export default function BudgetPage() {
         >
           {saving ? "Saving…" : "Save budget"}
         </button>
+        {hasSavedPlan && (
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={clearing}
+            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-600 hover:text-red-600 disabled:opacity-50"
+          >
+            {clearing ? "Clearing…" : "Clear budget"}
+          </button>
+        )}
         {saved && (
           <span className="text-sm text-emerald-700">
             Saved — this now shows on your dashboard.
