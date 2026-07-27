@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { verifyAndMarkPaid } from "@/lib/verifyPayment";
 
+// Never statically prerendered — always needs a real request.
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const { sessionId } = await request.json();
 

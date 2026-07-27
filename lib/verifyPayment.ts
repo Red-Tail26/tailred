@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 // Server-only. Always asks Stripe directly whether a session actually
 // got paid before writing anything — never trusts a client-supplied
@@ -7,7 +7,7 @@ import { stripe } from "@/lib/stripe";
 export async function verifyAndMarkPaid(
   sessionId: string
 ): Promise<{ paid: boolean; invoiceId?: string; error?: string }> {
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  const session = await getStripe().checkout.sessions.retrieve(sessionId);
 
   if (session.payment_status !== "paid") {
     return { paid: false };

@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { stripe, APPLICATION_FEE_RATE } from "@/lib/stripe";
+import { getStripe, APPLICATION_FEE_RATE } from "@/lib/stripe";
+
+// Never statically prerendered — always needs a real request.
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const stripe = getStripe();
   const { invoiceId } = await request.json();
 
   if (!invoiceId) {
