@@ -15,6 +15,7 @@ type Profile = {
   phone: string | null;
   website: string | null;
   social_links: string | null;
+  stripe_charges_enabled: boolean | null;
 };
 
 type Stats = {
@@ -76,7 +77,7 @@ export default function DashboardPage() {
         supabase
           .from("business_profile")
           .select(
-            "business_name, business_type, logo_url, address, phone, website, social_links"
+            "business_name, business_type, logo_url, address, phone, website, social_links, stripe_charges_enabled"
           )
           .eq("user_id", user.id)
           .maybeSingle(),
@@ -181,7 +182,12 @@ export default function DashboardPage() {
       href: "/dashboard/invoices",
     },
     {
-      label: "Get paid (Stripe Connect — coming soon)",
+      label: "Connect Stripe to accept payments",
+      done: !!profile?.stripe_charges_enabled,
+      href: "/dashboard/payments",
+    },
+    {
+      label: "Get paid on an invoice",
       done: stats.paidCount > 0,
       href: "/dashboard/invoices",
     },

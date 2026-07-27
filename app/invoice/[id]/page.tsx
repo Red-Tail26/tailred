@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { verifyAndMarkPaid } from "@/lib/verifyPayment";
+import PayInvoiceButton from "@/components/PayInvoiceButton";
 
 function currency(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -7,10 +9,21 @@ function currency(n: number) {
 
 export default async function PublicInvoicePage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams: { paid?: string; session_id?: string };
 }) {
   const supabase = createClient();
+
+  let justPaid = false;
+
+  // Coming back from Stripe — verify with Stripe directly before trusting
+  // anything, then the invoice fetch below will reflect the real status.
+  if (searchParams.paid === "1" && searchParams.session_id) {
+    const result = await verifyAndMarkPaid(searchParams.session_id);
+    justPaid = result.paid;
+  }
 
   const { data: invoice } = await supabase
     .from("invoices")
@@ -35,6 +48,8 @@ export default async function PublicInvoicePage({
     quantity: number;
   }[];
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const canPayOnline =
+    invoice.status === "sent" && profile?.stripe_charges_enabled;
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-8 px-6 py-12">
@@ -65,6 +80,14 @@ export default async function PublicInvoicePage({
           {invoice.status}
         </span>
       </div>
+
+      {justPaid && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center">
+          <p className="text-sm font-medium text-emerald-800">
+            Payment received — thank you!
+          </p>
+        </div>
+      )}
 
       <div>
         <p className="text-sm text-neutral-500">Billed to</p>
@@ -99,7 +122,11 @@ export default async function PublicInvoicePage({
         <span>{currency(total)}</span>
       </div>
 
-      {invoice.status !== "paid" && (
+      {canPayOnline && (
+        <PayInvoiceButton invoiceId={invoice.id} amountLabel={currency(total)} />
+      )}
+
+      {invoice.status !== "paid" && !canPayOnline && (
         <div className="rounded-lg border border-dashed border-neutral-300 p-4 text-center text-sm text-neutral-500">
           Online payment isn&apos;t set up yet — this business will follow up
           on how to pay.

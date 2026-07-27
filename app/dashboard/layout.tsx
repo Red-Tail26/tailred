@@ -12,6 +12,7 @@ const navItems = [
   { href: "/dashboard/plan", label: "Business Plan" },
   { href: "/dashboard/invoices", label: "Invoices" },
   { href: "/dashboard/inventory", label: "Inventory" },
+  { href: "/dashboard/payments", label: "Get Paid" },
 ];
 
 export default function DashboardLayout({
