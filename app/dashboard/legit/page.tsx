@@ -138,16 +138,28 @@ export default function LegitChecklistPage() {
                 <p className="mt-1 text-sm text-neutral-500">
                   {item.description}
                 </p>
-                {item.link && (
-                  <a
-                    href={item.link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 inline-block text-xs font-medium text-neutral-700 underline"
-                  >
-                    {item.link.label} ↗
-                  </a>
-                )}
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {item.link && (
+                    <a
+                      href={item.link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block text-xs font-medium text-neutral-700 underline"
+                    >
+                      {item.link.label} ↗
+                    </a>
+                  )}
+                  {item.partner && (
+                    <a
+                      href={item.partner.href}
+                      target="_blank"
+                      rel="noopener noreferrer sponsored"
+                      className="inline-block text-xs font-medium text-amber-700 underline"
+                    >
+                      {item.partner.label} ↗
+                    </a>
+                  )}
+                </div>
               </div>
             </li>
           );
@@ -158,6 +170,11 @@ export default function LegitChecklistPage() {
         Informational only — not legal, tax, or financial advice. Every
         state and city is different; when in doubt, check with a local
         professional.
+        <br />
+        Links in amber are partner recommendations — Tailred may earn a
+        commission if you sign up through one, at no extra cost to you.
+        We only recommend services we think are genuinely worth
+        considering.
       </p>
     </div>
   );

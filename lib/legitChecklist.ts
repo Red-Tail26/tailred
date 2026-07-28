@@ -3,6 +3,13 @@ export type LegitChecklistItem = {
   title: string;
   description: string;
   link?: { label: string; href: string };
+  // Affiliate/referral placement — Tailred may earn a commission if
+  // someone signs up through this link once a real affiliate ID is in
+  // the URL. See the TODO comments below: these currently point at each
+  // company's plain homepage (no tracking code), so they earn nothing
+  // yet. Once approved for an affiliate program, replace `href` with
+  // the real tracking link — no other code changes needed.
+  partner?: { label: string; href: string };
 };
 
 export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
@@ -14,6 +21,12 @@ export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
     link: {
       label: "Compare structures (IRS.gov)",
       href: "https://www.irs.gov/businesses/small-businesses-self-employed/business-structures",
+    },
+    // TODO: replace with a real ZenBusiness/Northwest Registered Agent/
+    // Tailor Brands affiliate link once approved for their program.
+    partner: {
+      label: "Form an LLC with ZenBusiness",
+      href: "https://www.zenbusiness.com/",
     },
   },
   {
@@ -41,6 +54,12 @@ export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
     title: "Open a business bank account",
     description:
       "Keeping business money separate from personal makes bookkeeping (and tax time) dramatically easier — and it's what makes your COGS/profit numbers in Tailred actually trustworthy.",
+    // TODO: replace with a real Found/Novo/Lili affiliate link once
+    // approved for their referral program.
+    partner: {
+      label: "Open a free account with Found",
+      href: "https://found.com/",
+    },
   },
   {
     key: "license-permits",
@@ -63,6 +82,12 @@ export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
     title: "Consider business insurance",
     description:
       "Optional, but worth a look especially for service businesses (power washing, detailing, moving, cleaning) where something could go wrong on someone else's property.",
+    // TODO: replace with a real NEXT Insurance/Thimble affiliate link
+    // once approved for their program.
+    partner: {
+      label: "Get a quote from NEXT Insurance",
+      href: "https://www.nextinsurance.com/",
+    },
   },
   {
     key: "separate-records",
