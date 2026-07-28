@@ -16,7 +16,7 @@ const geistMono = localFont({
 // TODO: update to a real custom domain once you buy one — this is the
 // Vercel-provided URL, and it's used to resolve absolute URLs for
 // social-share previews (Open Graph/Twitter images).
-const siteUrl = "https://tailred-k2fsw7w59-tailred.vercel.app";
+const siteUrl = "https://tailred.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
