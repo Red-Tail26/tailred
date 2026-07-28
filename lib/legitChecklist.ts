@@ -82,10 +82,10 @@ export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
     title: "Consider business insurance",
     description:
       "Optional, but worth a look especially for service businesses (power washing, detailing, moving, cleaning) where something could go wrong on someone else's property.",
-    // TODO: replace with a real NEXT Insurance/Thimble affiliate link
-    // once approved for their program.
+    // TODO: replace with a real ERGO NEXT Insurance/Thimble affiliate
+    // link once approved for their program.
     partner: {
-      label: "Get a quote from NEXT Insurance",
+      label: "Get a quote from ERGO NEXT Insurance",
       href: "https://www.nextinsurance.com/",
     },
   },
