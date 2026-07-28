@@ -9,7 +9,11 @@ export type LegitChecklistItem = {
   // company's plain homepage (no tracking code), so they earn nothing
   // yet. Once approved for an affiliate program, replace `href` with
   // the real tracking link — no other code changes needed.
-  partner?: { label: string; href: string };
+  //
+  // `reason` is the honest "why we picked this one" — keep it genuine,
+  // not sales copy. If a better free/non-partner option ever comes up,
+  // recommend that instead; that's what keeps this trustworthy.
+  partner?: { label: string; href: string; reason: string };
 };
 
 export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
@@ -22,11 +26,13 @@ export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
       label: "Compare structures (IRS.gov)",
       href: "https://www.irs.gov/businesses/small-businesses-self-employed/business-structures",
     },
-    // TODO: replace with a real ZenBusiness/Northwest Registered Agent/
-    // Tailor Brands affiliate link once approved for their program.
+    // TODO: replace with a real Northwest Registered Agent affiliate
+    // link once approved for their program.
     partner: {
-      label: "Form an LLC with ZenBusiness",
-      href: "https://www.zenbusiness.com/",
+      label: "Northwest Registered Agent",
+      href: "https://www.northwestregisteredagent.com/",
+      reason:
+        "if you go the LLC route, they keep your home address off public filings instead of selling it to marketers, which most registered agents do",
     },
   },
   {
@@ -54,11 +60,13 @@ export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
     title: "Open a business bank account",
     description:
       "Keeping business money separate from personal makes bookkeeping (and tax time) dramatically easier — and it's what makes your COGS/profit numbers in Tailred actually trustworthy.",
-    // TODO: replace with a real Found/Novo/Lili affiliate link once
-    // approved for their referral program.
+    // TODO: replace with a real Found affiliate link once approved for
+    // their program.
     partner: {
-      label: "Open a free account with Found",
+      label: "Found",
       href: "https://found.com/",
+      reason:
+        "built specifically for freelancers and the self-employed, free to open, no minimum balance",
     },
   },
   {
@@ -82,11 +90,12 @@ export const LEGIT_CHECKLIST: LegitChecklistItem[] = [
     title: "Consider business insurance",
     description:
       "Optional, but worth a look especially for service businesses (power washing, detailing, moving, cleaning) where something could go wrong on someone else's property.",
-    // TODO: replace with a real ERGO NEXT Insurance/Thimble affiliate
-    // link once approved for their program.
+    // TODO: replace with a real ERGO NEXT Insurance affiliate link once
+    // approved for their program.
     partner: {
-      label: "Get a quote from ERGO NEXT Insurance",
+      label: "ERGO NEXT Insurance",
       href: "https://www.nextinsurance.com/",
+      reason: "you can get a quote and a policy online without talking to an agent first",
     },
   },
   {

@@ -138,28 +138,30 @@ export default function LegitChecklistPage() {
                 <p className="mt-1 text-sm text-neutral-500">
                   {item.description}
                 </p>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                  {item.link && (
-                    <a
-                      href={item.link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block text-xs font-medium text-neutral-700 underline"
-                    >
-                      {item.link.label} ↗
-                    </a>
-                  )}
-                  {item.partner && (
+                {item.link && (
+                  <a
+                    href={item.link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block text-xs font-medium text-neutral-700 underline"
+                  >
+                    {item.link.label} ↗
+                  </a>
+                )}
+                {item.partner && (
+                  <p className="mt-1.5 text-xs text-neutral-400">
+                    We like{" "}
                     <a
                       href={item.partner.href}
                       target="_blank"
                       rel="noopener noreferrer sponsored"
-                      className="inline-block text-xs font-medium text-amber-700 underline"
+                      className="font-medium text-amber-700 underline"
                     >
-                      {item.partner.label} ↗
-                    </a>
-                  )}
-                </div>
+                      {item.partner.label}
+                    </a>{" "}
+                    for this — {item.partner.reason}.
+                  </p>
+                )}
               </div>
             </li>
           );
