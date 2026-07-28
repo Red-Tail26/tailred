@@ -6,6 +6,9 @@ import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/client";
 import { buildVCard } from "@/lib/vcard";
 import { LEGIT_CHECKLIST } from "@/lib/legitChecklist";
+import { MILESTONES } from "@/lib/milestones";
+
+const DISMISSED_MILESTONES_KEY = "tailred_dismissed_milestones";
 
 type Profile = {
   business_name: string | null;
@@ -55,6 +58,32 @@ export default function DashboardPage() {
   const [budget, setBudget] = useState<BudgetSummary | null>(null);
   const [legitDone, setLegitDone] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [dismissedMilestones, setDismissedMilestones] = useState<Set<string>>(
+    new Set()
+  );
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DISMISSED_MILESTONES_KEY);
+      if (stored) setDismissedMilestones(new Set(JSON.parse(stored)));
+    } catch {
+      // localStorage unavailable — milestones just won't stay dismissed
+    }
+  }, []);
+
+  function dismissMilestone(key: string) {
+    const next = new Set(dismissedMilestones);
+    next.add(key);
+    setDismissedMilestones(next);
+    try {
+      localStorage.setItem(
+        DISMISSED_MILESTONES_KEY,
+        JSON.stringify(Array.from(next))
+      );
+    } catch {
+      // ignore — worst case it shows again next visit
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -203,6 +232,21 @@ export default function DashboardPage() {
     },
   ];
 
+  // Later entries in MILESTONES are more advanced, so check from the end
+  // — if someone's hit two milestones at once, show the more impressive one.
+  const activeMilestone = [...MILESTONES]
+    .reverse()
+    .find(
+      (m) =>
+        !dismissedMilestones.has(m.key) &&
+        m.condition({
+          soldCount: stats.soldCount,
+          totalProfit: stats.totalProfit,
+          legitDone,
+          legitTotal: LEGIT_CHECKLIST.length,
+        })
+    );
+
   const displayName = profile?.business_name || (hasProfile ? "Unnamed business" : "Set up your business");
 
   return (
@@ -236,6 +280,46 @@ export default function DashboardPage() {
           Edit
         </Link>
       </div>
+
+      {/* Milestone celebration */}
+      {activeMilestone && (
+        <div className="relative rounded-lg border border-emerald-200 bg-emerald-50 p-4 pr-10">
+          <button
+            type="button"
+            onClick={() => dismissMilestone(activeMilestone.key)}
+            aria-label="Dismiss"
+            className="absolute right-3 top-3 text-emerald-700 hover:text-emerald-900"
+          >
+            ×
+          </button>
+          <p className="text-sm font-semibold text-emerald-800">
+            {activeMilestone.title}
+          </p>
+          <p className="mt-1 text-sm text-emerald-700">
+            {activeMilestone.message}
+          </p>
+          {activeMilestone.offer && (
+            <>
+              <p className="mt-2 text-xs text-emerald-700">
+                Ready for the next step? We like{" "}
+                <a
+                  href={activeMilestone.offer.href}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="font-medium text-amber-700 underline"
+                >
+                  {activeMilestone.offer.label}
+                </a>{" "}
+                here — {activeMilestone.offer.reason}.
+              </p>
+              <p className="mt-1 text-xs text-emerald-600/70">
+                That link is a partner recommendation — Tailred may earn a
+                commission if you sign up, at no extra cost to you.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
