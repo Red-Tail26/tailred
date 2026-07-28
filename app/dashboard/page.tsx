@@ -8,7 +8,11 @@ import { buildVCard } from "@/lib/vcard";
 import { LEGIT_CHECKLIST } from "@/lib/legitChecklist";
 import { MILESTONES } from "@/lib/milestones";
 
-const DISMISSED_MILESTONES_KEY = "tailred_dismissed_milestones";
+// Scoped per-user (see below) so dismissing a milestone on one Tailred
+// account can't leak into another account sharing the same browser.
+function dismissedMilestonesKey(userId: string) {
+  return `tailred_dismissed_milestones_${userId}`;
+}
 
 type Profile = {
   business_name: string | null;
@@ -61,23 +65,16 @@ export default function DashboardPage() {
   const [dismissedMilestones, setDismissedMilestones] = useState<Set<string>>(
     new Set()
   );
-
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(DISMISSED_MILESTONES_KEY);
-      if (stored) setDismissedMilestones(new Set(JSON.parse(stored)));
-    } catch {
-      // localStorage unavailable — milestones just won't stay dismissed
-    }
-  }, []);
+  const [userId, setUserId] = useState<string | null>(null);
 
   function dismissMilestone(key: string) {
     const next = new Set(dismissedMilestones);
     next.add(key);
     setDismissedMilestones(next);
+    if (!userId) return;
     try {
       localStorage.setItem(
-        DISMISSED_MILESTONES_KEY,
+        dismissedMilestonesKey(userId),
         JSON.stringify(Array.from(next))
       );
     } catch {
@@ -94,6 +91,14 @@ export default function DashboardPage() {
       if (!user) {
         setLoading(false);
         return;
+      }
+
+      setUserId(user.id);
+      try {
+        const stored = localStorage.getItem(dismissedMilestonesKey(user.id));
+        if (stored) setDismissedMilestones(new Set(JSON.parse(stored)));
+      } catch {
+        // localStorage unavailable — milestones just won't stay dismissed
       }
 
       const [

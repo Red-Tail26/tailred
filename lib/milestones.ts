@@ -28,6 +28,13 @@ export const MILESTONES: Milestone[] = [
       "That's the whole loop starting to work: sourced, listed, sold. Keep going.",
   },
   {
+    key: "legit-complete",
+    condition: (s) => s.legitTotal > 0 && s.legitDone >= s.legitTotal,
+    title: "You've checked off the whole Getting Legit list.",
+    message:
+      "Structure, EIN, bank account, insurance — you're running a real, above-board business now.",
+  },
+  {
     key: "profit-500",
     condition: (s) => s.totalProfit >= 500,
     title: "You've cleared $500 in profit.",
@@ -40,12 +47,5 @@ export const MILESTONES: Milestone[] = [
       reason:
         "worth knowing financing options exist once you're ready to buy more inventory or cover a slow month — it's a credit product, not free money, so only worth a look if it actually fits a real need",
     },
-  },
-  {
-    key: "legit-complete",
-    condition: (s) => s.legitTotal > 0 && s.legitDone >= s.legitTotal,
-    title: "You've checked off the whole Getting Legit list.",
-    message:
-      "Structure, EIN, bank account, insurance — you're running a real, above-board business now.",
   },
 ];
