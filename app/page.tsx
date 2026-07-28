@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Tailred — Turn a side hustle into a running business",
+  description:
+    "Free tools to start and run a side hustle: a business plan, a budget calculator, inventory and profit tracking, invoicing, and getting paid — all in one place. Built for resellers, personal trainers, and service businesses just starting out.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default function Home() {
   return (
