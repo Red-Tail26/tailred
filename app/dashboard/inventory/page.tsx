@@ -284,6 +284,12 @@ export default function InventoryPage() {
               />
             </label>
           </div>
+          {!editingId && items.length === 0 && (
+            <p className="text-xs text-neutral-400">
+              Most people pause right here — that&apos;s normal. Go ahead
+              and add it; you can always edit or delete it after.
+            </p>
+          )}
           <div className="flex gap-2">
             <button
               type="submit"

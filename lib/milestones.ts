@@ -3,6 +3,7 @@ export type MilestoneStats = {
   totalProfit: number;
   legitDone: number;
   legitTotal: number;
+  paidCount: number;
 };
 
 export type Milestone = {
@@ -47,5 +48,12 @@ export const MILESTONES: Milestone[] = [
       reason:
         "worth knowing financing options exist once you're ready to buy more inventory or cover a slow month — it's a credit product, not free money, so only worth a look if it actually fits a real need",
     },
+  },
+  {
+    key: "first-paid",
+    condition: (s) => s.paidCount >= 1,
+    title: "You just got paid — the whole cycle worked.",
+    message:
+      "Before it blends into one balance: worth setting aside a percentage for taxes now, while you know exactly which payment it came from. Doesn't have to be exact — even a rough 20-30% put aside beats figuring it out at tax time.",
   },
 ];

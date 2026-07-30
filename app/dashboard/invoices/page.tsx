@@ -313,6 +313,13 @@ export default function InvoicesPage() {
         </p>
       ) : (
         <div className="flex flex-col gap-2">
+          {invoices.every((i) => i.status === "draft") && (
+            <p className="text-xs text-neutral-400">
+              Most people pause right here too — that&apos;s normal. Sending
+              it doesn&apos;t lock anything in; you can still mark it paid
+              whenever the money actually shows up.
+            </p>
+          )}
           {invoices.map((invoice) => (
             <div
               key={invoice.id}

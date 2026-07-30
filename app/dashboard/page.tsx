@@ -249,6 +249,7 @@ export default function DashboardPage() {
           totalProfit: stats.totalProfit,
           legitDone,
           legitTotal: LEGIT_CHECKLIST.length,
+          paidCount: stats.paidCount,
         })
     );
 
@@ -341,7 +342,12 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="rounded-lg border border-neutral-200 p-3">
-          <p className="text-xs text-neutral-500">Total profit</p>
+          <p className="text-xs text-neutral-500">
+            Total profit
+            <span className="block text-[0.65rem] text-neutral-400">
+              before payment fees
+            </span>
+          </p>
           <p className="text-lg font-semibold text-emerald-700">
             {currency(stats.totalProfit)}
           </p>
