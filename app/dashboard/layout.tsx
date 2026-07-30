@@ -64,13 +64,15 @@ export default function DashboardLayout({
         </Link>
 
         {/* Mobile: flat row, no group labels — a bottom bar has no room
-            for them. Desktop: grouped with headers. */}
-        <div className="flex w-full justify-around md:hidden">
+            for them. 7 items don't fit one screen width, so this scrolls
+            horizontally instead of wrapping or getting clipped.
+            Desktop: grouped with headers. */}
+        <div className="flex w-full gap-1 overflow-x-auto px-2 md:hidden">
           {allNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-md px-3 py-2 text-center text-xs text-neutral-600 hover:bg-neutral-100"
+              className="shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-center text-xs text-neutral-600 hover:bg-neutral-100"
             >
               {item.label}
             </Link>
