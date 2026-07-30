@@ -24,6 +24,8 @@ const navGroups = [
       { href: "/dashboard/plan", label: "Business Plan" },
       { href: "/dashboard/invoices", label: "Invoices" },
       { href: "/dashboard/payments", label: "Get Paid" },
+      { href: "/dashboard/expenses", label: "Expenses" },
+      { href: "/dashboard/reports", label: "Reports" },
     ],
   },
 ];
@@ -45,8 +47,8 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-dvh pb-16 md:pb-0 md:pl-56">
-      <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-neutral-200 bg-white py-2 md:inset-y-0 md:left-0 md:right-auto md:w-56 md:flex-col md:justify-start md:gap-1 md:border-t-0 md:border-r md:p-4">
+    <div className="min-h-dvh pb-16 md:pb-0 md:pl-56 print:pb-0 print:pl-0">
+      <nav className="fixed inset-x-0 bottom-0 z-10 flex justify-around border-t border-neutral-200 bg-white py-2 print:hidden md:inset-y-0 md:left-0 md:right-auto md:w-56 md:flex-col md:justify-start md:gap-1 md:border-t-0 md:border-r md:p-4">
         <Link
           href="/dashboard"
           className="hidden items-center gap-2 px-2 pb-4 md:flex"
