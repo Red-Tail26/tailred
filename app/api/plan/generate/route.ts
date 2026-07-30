@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@/lib/supabase/server";
+
+// Never statically prerendered — always needs a real request/auth.
+export const dynamic = "force-dynamic";
 
 type Intake = {
   problem: string;
@@ -53,6 +57,15 @@ const PLAN_SCHEMA = {
 };
 
 export async function POST(request: Request) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Not logged in." }, { status: 401 });
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
