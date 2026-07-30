@@ -16,14 +16,16 @@ type Intake = {
   differentiation: string;
   profitabilityTimeline: string;
   risks: string;
+  notes: string;
 };
 
 const SYSTEM_PROMPT = `You turn a solo side-hustler's own answers to ten business questions into a clear, organized one-page plan. You are NOT a general-purpose assistant — do not behave like a chatbot offering broad advice, market research, or ideas the user didn't give you.
 
 Strict rules:
-- Work ONLY from what the user wrote in each answer. Do not invent numbers, competitors, market size, strategies, or facts they did not provide.
+- Every question is optional — some may be unanswered. Work ONLY from what the user wrote. Do not invent numbers, competitors, market size, strategies, or facts they did not provide.
 - Your job is to sharpen, organize, and clarify their own words into plain, well-structured sentences — not to add new content, generic business tips, or textbook framing.
 - If an answer is thin, vague, or missing, say so plainly in that section (e.g. "Not yet answered — worth thinking through before relying on this plan") rather than filling the gap with generic advice.
+- The user may also add free-form notes at the end. Use those only as supporting context to sharpen the other sections (e.g. a note might clarify pricing or timeline) — do not treat notes as license to add ideas the user didn't actually state. Summarize the notes themselves plainly in the "notes" field, or say "No additional notes added." if empty.
 - No jargon, no "as a business owner you should..." lecturing, no invented statistics. Write like someone summarizing what they were just told, for the person who told them.
 - Keep each section to 1-3 sentences.`;
 
@@ -40,6 +42,7 @@ const PLAN_SCHEMA = {
     differentiation: { type: "string", description: "Tightened restatement of what makes this hard to replace" },
     profitabilityTimeline: { type: "string", description: "Tightened restatement of when this becomes profitable" },
     risks: { type: "string", description: "Tightened restatement of what assumptions could prove the user wrong" },
+    notes: { type: "string", description: "Plain summary of the user's free-form notes, or 'No additional notes added.' if empty" },
   },
   required: [
     "problem",
@@ -52,6 +55,7 @@ const PLAN_SCHEMA = {
     "differentiation",
     "profitabilityTimeline",
     "risks",
+    "notes",
   ],
   additionalProperties: false,
 };
@@ -75,8 +79,14 @@ export async function POST(request: Request) {
   }
 
   const intake = (await request.json()) as Intake;
-  if (!intake.problem) {
-    return NextResponse.json({ error: "Missing problem statement." }, { status: 400 });
+  const hasAnyAnswer = Object.values(intake).some(
+    (v) => typeof v === "string" && v.trim().length > 0
+  );
+  if (!hasAnyAnswer) {
+    return NextResponse.json(
+      { error: "Add at least one answer before generating a plan." },
+      { status: 400 }
+    );
   }
 
   const client = new Anthropic({ apiKey });
@@ -101,7 +111,9 @@ export async function POST(request: Request) {
 7. How will I find customers? ${intake.customerAcquisition || "(not answered)"}
 8. What makes me difficult to replace? ${intake.differentiation || "(not answered)"}
 9. When will I become profitable? ${intake.profitabilityTimeline || "(not answered)"}
-10. What assumptions could prove me wrong? ${intake.risks || "(not answered)"}`,
+10. What assumptions could prove me wrong? ${intake.risks || "(not answered)"}
+
+Additional notes: ${intake.notes || "(none)"}`,
         },
       ],
     });

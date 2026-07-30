@@ -14,6 +14,7 @@ type Intake = {
   differentiation: string;
   profitabilityTimeline: string;
   risks: string;
+  notes: string;
 };
 
 type Plan = Intake;
@@ -82,7 +83,12 @@ const EMPTY_INTAKE: Intake = {
   differentiation: "",
   profitabilityTimeline: "",
   risks: "",
+  notes: "",
 };
+
+function hasAnyAnswer(intake: Intake) {
+  return Object.values(intake).some((v) => v.trim().length > 0);
+}
 
 function fallbackPlan(intake: Intake): Plan {
   const tighten = (value: string) =>
@@ -99,6 +105,7 @@ function fallbackPlan(intake: Intake): Plan {
     differentiation: tighten(intake.differentiation),
     profitabilityTimeline: tighten(intake.profitabilityTimeline),
     risks: tighten(intake.risks),
+    notes: intake.notes.trim() || "No additional notes added.",
   };
 }
 
@@ -114,6 +121,7 @@ export default function PlanPage() {
 
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
+    if (!hasAnyAnswer(intake)) return;
     setLoading(true);
     setUsedFallback(false);
 
@@ -139,8 +147,8 @@ export default function PlanPage() {
       <div>
         <h1 className="text-xl font-semibold">Business plan</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Answer these ten questions honestly — the plan below is built
-          strictly from your own answers, not generic advice.
+          Answer whichever of these you can — all optional. The plan below
+          is built strictly from what you write, not generic advice.
         </p>
       </div>
 
@@ -149,7 +157,6 @@ export default function PlanPage() {
           <label key={q.key} className="flex flex-col gap-1 text-sm">
             {i + 1}. {q.label}
             <textarea
-              required={i === 0}
               value={intake[q.key]}
               onChange={(e) => update(q.key, e.target.value)}
               placeholder={q.placeholder}
@@ -159,9 +166,20 @@ export default function PlanPage() {
           </label>
         ))}
 
+        <label className="flex flex-col gap-1 text-sm">
+          Anything else you want to note?
+          <textarea
+            value={intake.notes}
+            onChange={(e) => update("notes", e.target.value)}
+            placeholder="Any other context, ideas, or constraints worth factoring in"
+            rows={3}
+            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900"
+          />
+        </label>
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !hasAnyAnswer(intake)}
           className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           {loading ? "Generating…" : "Generate plan"}
@@ -185,6 +203,12 @@ export default function PlanPage() {
               <p className="mt-1 text-sm text-neutral-900">{plan[q.key]}</p>
             </div>
           ))}
+          <div>
+            <h2 className="text-sm font-semibold text-neutral-700">
+              Additional notes
+            </h2>
+            <p className="mt-1 text-sm text-neutral-900">{plan.notes}</p>
+          </div>
         </section>
       )}
 
