@@ -42,14 +42,32 @@ export default function PlanPage() {
     startupBudget: "",
   });
   const [plan, setPlan] = useState<ReturnType<typeof generatePlan> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [usedFallback, setUsedFallback] = useState(false);
 
   function update<K extends keyof Intake>(key: K, value: string) {
     setIntake((f) => ({ ...f, [key]: value }));
   }
 
-  function handleGenerate(e: React.FormEvent) {
+  async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
-    setPlan(generatePlan(intake));
+    setLoading(true);
+    setUsedFallback(false);
+
+    try {
+      const res = await fetch("/api/plan/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(intake),
+      });
+      if (!res.ok) throw new Error("Plan generation failed");
+      setPlan(await res.json());
+    } catch {
+      setPlan(generatePlan(intake));
+      setUsedFallback(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -116,11 +134,19 @@ export default function PlanPage() {
 
         <button
           type="submit"
-          className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+          disabled={loading}
+          className="self-start rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          Generate plan
+          {loading ? "Generating…" : "Generate plan"}
         </button>
       </form>
+
+      {usedFallback && (
+        <p className="text-xs text-amber-600">
+          AI plan generation wasn&apos;t available, so this is filled in from
+          your own answers instead.
+        </p>
+      )}
 
       {plan && (
         <section className="flex flex-col gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-5">
@@ -168,9 +194,7 @@ export default function PlanPage() {
       )}
 
       <p className="text-xs text-neutral-400">
-        Informational only — not legal, tax, or financial advice. This early
-        version drafts your plan from your own answers; a fuller
-        AI-generated version is planned for later.
+        Informational only — not legal, tax, or financial advice.
       </p>
     </div>
   );
