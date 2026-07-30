@@ -1,36 +1,42 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isServiceBusiness } from "@/lib/businessType";
 
 // Grouped deliberately, not just alphabetized: "the work" is the actual
 // craft/hustle (sourcing, listing, selling — the technician's job).
 // "The business" is everything that makes it a real business instead of
 // a hobby (profile, paperwork, money, getting paid — the owner's job).
 // Same distinction E-Myth is about; the nav itself teaches it.
-const navGroups = [
-  {
-    label: "Do the work",
-    items: [{ href: "/dashboard/inventory", label: "Inventory" }],
-  },
-  {
-    label: "Run the business",
-    items: [
-      { href: "/onboarding", label: "Business Profile" },
-      { href: "/dashboard/legit", label: "Getting Legit" },
-      { href: "/dashboard/budget", label: "Budget Calculator" },
-      { href: "/dashboard/plan", label: "Business Plan" },
-      { href: "/dashboard/invoices", label: "Invoices" },
-      { href: "/dashboard/payments", label: "Get Paid" },
-      { href: "/dashboard/expenses", label: "Expenses" },
-      { href: "/dashboard/reports", label: "Reports" },
-    ],
-  },
-];
-
-const allNavItems = navGroups.flatMap((g) => g.items);
+function buildNavGroups(isService: boolean) {
+  return [
+    {
+      label: "Do the work",
+      items: [
+        isService
+          ? { href: "/dashboard/equipment", label: "Equipment" }
+          : { href: "/dashboard/inventory", label: "Inventory" },
+      ],
+    },
+    {
+      label: "Run the business",
+      items: [
+        { href: "/onboarding", label: "Business Profile" },
+        { href: "/dashboard/legit", label: "Getting Legit" },
+        { href: "/dashboard/budget", label: "Budget Calculator" },
+        { href: "/dashboard/plan", label: "Business Plan" },
+        { href: "/dashboard/invoices", label: "Invoices" },
+        { href: "/dashboard/payments", label: "Get Paid" },
+        { href: "/dashboard/expenses", label: "Expenses" },
+        { href: "/dashboard/reports", label: "Reports" },
+      ],
+    },
+  ];
+}
 
 export default function DashboardLayout({
   children,
@@ -39,6 +45,29 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const supabase = createClient();
+  const [isService, setIsService] = useState(false);
+
+  useEffect(() => {
+    async function loadBusinessType() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("business_profile")
+        .select("business_type")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      setIsService(isServiceBusiness(profile?.business_type ?? null));
+    }
+    loadBusinessType();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const navGroups = buildNavGroups(isService);
+  const allNavItems = navGroups.flatMap((g) => g.items);
 
   async function handleLogout() {
     await supabase.auth.signOut();
